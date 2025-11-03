@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel File Merger</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #status {
+            margin-top: 15px;
+            padding: 10px;
+            display: none;
+        }
+        .success {
+            background-color: #dff0d8;
+            border: 1px solid #d6e9c6;
+            color: #3c763d;
+        }
+        .error {
+            background-color: #f2dede;
+            border: 1px solid #ebccd1;
+            color: #a94442;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Excel File Merger</h1>
+        <p>Upload multiple Excel files to merge them into a single file</p>
+        
+        <div class="input-group">
+            <input type="file" id="fileInput" multiple accept=".xlsx, .xls">
+        </div>
+        
+        <button onclick="mergeFiles()">Merge Files</button>
+        
+        <div id="status"></div>
+    </div>
+
+    <!-- Include required libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        async function mergeFiles() {
+            const fileInput = document.getElementById('fileInput');
+            const statusDiv = document.getElementById('status');
+            
+            if (fileInput.files.length < 2) {
+                statusDiv.className = 'error';
+                statusDiv.textContent = 'Please select at least two Excel files to merge.';
+                statusDiv.style.display = 'block';
+                return;
+            }
+            
+            try {
+                statusDiv.className = '';
+                statusDiv.textContent = 'Processing files...';
+                statusDiv.style.display = 'block';
+                
+                // Create a new workbook
+                const mergedWorkbook = XLSX.utils.book_new();
+                const mergedData = [];
+                
+                // Process each file
+                for (let i = 0; i < fileInput.files.length; i++) {
+                    const file = fileInput.files[i];
+                    
+                    // Read the file
+                    const data = await readExcelFile(file);
+                    
+                    // Append data to merged data array
+                    mergedData.push(...data);
+                }
+                
+                // Create worksheet from merged data
+                const mergedWorksheet = XLSX.utils.json_to_sheet(mergedData);
+                
+                // Add worksheet to workbook
+                XLSX.utils.book_append_sheet(mergedWorkbook, mergedWorksheet, "Merged Data");
+                
+                // Generate and download the merged file
+                XLSX.writeFile(mergedWorkbook, "merged_excel_file.xlsx");
+                
+                statusDiv.className = 'success';
+                statusDiv.textContent = 'Files successfully merged! Download started.';
+            } catch (error) {
+                console.error(error);
+                statusDiv.className = 'error';
+                statusDiv.textContent = 'Error merging files: ' + error.message;
+            }
+        }
+        
+        function readExcelFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    try {
+                        const data = e.target.result;
+                        const workbook = XLSX.read(data, { type: 'binary' });
+                        
+                        // Get first sheet
+                        const firstSheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[firstSheetName];
+                        
+                        // Convert to JSON
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                        resolve(jsonData);
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                
+                reader.onerror = function(error) {
+                    reject(error);
+                };
+                
+                reader.readAsBinaryString(file);
+            });
+        }
+    </script>
+</body>
+</html>

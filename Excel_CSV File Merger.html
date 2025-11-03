@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>File Merger - Excel & CSV</title>
+
+<!-- Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root {
+  /* Light theme */
+  --bg-primary: #f8f9fa;
+  --bg-secondary: #ffffff;
+  --bg-card: rgba(255, 255, 255, 0.85);
+  --text-primary: #2d3436;
+  --text-secondary: #636e72;
+  --accent: #6c5ce7;
+  --accent-light: #a29bfe;
+  --accent-dark: #5f3dc4;
+  --success: #00b894;
+  --danger: #d63031;
+  --warning: #fdcb6e;
+  --border: rgba(0, 0, 0, 0.1);
+  --shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+  --radius: 16px;
+  
+  /* Dark theme */
+  --dark-bg-primary: #1a1a2e;
+  --dark-bg-secondary: #16213e;
+  --dark-bg-card: rgba(22, 33, 62, 0.85);
+  --dark-text-primary: #eee;
+  --dark-text-secondary: #a8b2d1;
+  --dark-border: rgba(255, 255, 255, 0.1);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  transition: all 0.3s ease;
+}
+
+body.dark-mode {
+  --bg-primary: var(--dark-bg-primary);
+  --bg-secondary: var(--dark-bg-secondary);
+  --bg-card: var(--dark-bg-card);
+  --text-primary: var(--dark-text-primary);
+  --text-secondary: var(--dark-text-secondary);
+  --border: var(--dark-border);
+}
+
+.background-shapes {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  overflow: hidden;
+}
+
+.shape {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+  opacity: 0.4;
+}
+
+.shape-1 {
+  width: 300px;
+  height: 300px;
+  background: var(--accent);
+  top: -50px;
+  left: -100px;
+}
+
+.shape-2 {
+  width: 200px;
+  height: 200px;
+  background: var(--accent-light);
+  bottom: 100px;
+  right: -50px;
+}
+
+.shape-3 {
+  width: 150px;
+  height: 150px;
+  background: var(--warning);
+  top: 50%;
+  left: 30%;
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  margin-top: 20px;
+}
+
+.header {
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: white;
+  padding: 40px 30px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.header::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxkZWZzPjxwYXR0ZXJuIGlkPSJwYXR0ZXJuIiB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiIHBhdHRlcm5UcmFuc2Zvcm09InJvdGF0ZSg0NSkiPjxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgZmlsbD0icmdiYSgyNTUsIDI1NSwgMjU1LCAwLjA1KSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNwYXR0ZXJuKSIvPjwvc3ZnPg==');
+  opacity: 0.3;
+}
+
+.header h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  position: relative;
+  z-index: 1;
+}
+
+.header p {
+  font-size: 1.1rem;
+  opacity: 0.9;
+  position: relative;
+  z-index: 1;
+}
+
+.theme-toggle {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: white;
+  font-size: 1.2rem;
+  transition: all 0.3s ease;
+  z-index: 2;
+}
+
+.theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(30deg);
+}
+
+.upload-section {
+  padding: 30px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-secondary);
+}
+
+.upload-area {
+  border: 2px dashed var(--accent);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  text-align: center;
+  padding: 60px 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.upload-area::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(108, 92, 231, 0.1) 0%, rgba(255, 255, 255, 0) 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.upload-area:hover, .upload-area.dragover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(108, 92, 231, 0.2);
+}
+
+.upload-area:hover::before, .upload-area.dragover::before {
+  opacity: 1;
+}
+
+.upload-icon {
+  font-size: 3.5em;
+  color: var(--accent);
+  margin-bottom: 20px;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+.upload-text {
+  font-size: 1.3em;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+
+.upload-subtext {
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+
+.file-input {
+  display: none;
+}
+
+.uploaded-files {
+  margin-top: 25px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.file-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 15px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  backdrop-filter: blur(5px);
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.file-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.file-icon {
+  color: var(--accent);
+  font-size: 1.5rem;
+}
+
+.file-name {
+  font-weight: 500;
+  color: var(--text-primary);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-remove {
+  background: var(--danger);
+  border: none;
+  color: white;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.file-remove:hover {
+  background: #b71c1c;
+  transform: scale(1.05);
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  padding: 25px 30px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.btn {
+  border: none;
+  border-radius: 10px;
+  padding: 14px 30px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+}
+
+.btn:hover::before {
+  transform: translateX(0);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: white;
+  box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(108, 92, 231, 0.4);
+}
+
+.btn-secondary {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-primary);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.tabs-section {
+  display: none;
+  background: var(--bg-secondary);
+}
+
+.tabs-header {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-card);
+  overflow-x: auto;
+  padding: 0 20px;
+  position: relative;
+}
+
+.tabs-header::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  width: 0;
+  transition: width 0.3s ease;
+}
+
+.tab-button {
+  padding: 18px 25px;
+  background: transparent;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  white-space: nowrap;
+  color: var(--text-secondary);
+  position: relative;
+}
+
+.tab-button.active {
+  color: var(--accent);
+}
+
+.tab-button:hover {
+  color: var(--accent);
+}
+
+.tab-button.active::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+.tab-content {
+  display: none;
+  padding: 25px;
+  background: var(--bg-secondary);
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.table-container {
+  overflow: auto;
+  max-height: 600px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+thead th {
+  position: sticky;
+  top: 0;
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: white;
+  padding: 15px;
+  text-align: left;
+  font-weight: 600;
+  z-index: 10;
+}
+
+tbody td {
+  padding: 12px 15px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.2s ease;
+}
+
+tr:hover {
+  background: var(--bg-primary);
+}
+
+.row-number {
+  font-weight: 600;
+  text-align: center;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+}
+
+.editable {
+  min-width: 100px;
+  display: inline-block;
+  padding: 8px 10px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.editable:focus {
+  outline: 2px solid var(--accent-light);
+  background: rgba(108, 92, 231, 0.1);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--text-secondary);
+}
+
+.empty-state-icon {
+  font-size: 5em;
+  margin-bottom: 25px;
+  opacity: 0.3;
+  color: var(--accent);
+}
+
+.fab {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: white;
+  border: none;
+  box-shadow: 0 4px 20px rgba(108, 92, 231, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.5rem;
+  transition: all 0.3s ease;
+  z-index: 100;
+}
+
+.fab:hover {
+  transform: scale(1.1) rotate(15deg);
+  box-shadow: 0 8px 25px rgba(108, 92, 231, 0.5);
+}
+
+/* Progress Bar Styles */
+.progress-container {
+  width: 100%;
+  margin: 20px 0;
+  height: 8px; /* Fixed height for progress bar */
+  background: var(--border);
+  border-radius: 4px;
+  display: none; /* Hidden by default */
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  border-radius: 4px;
+  width: 0%;
+  transition: width 0.3s ease;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.progress-text {
+  margin-top: 15px; /* Adjust spacing */
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  position: relative; /* Ensure text is above other elements */
+  display: block;
+}
+
+/* Optimization Info */
+.optimization-info {
+  background: rgba(0, 184, 148, 0.1);
+  border-left: 4px solid var(--success);
+  padding: 15px;
+  margin: 15px 0;
+  border-radius: 0 8px 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.optimization-info i {
+  color: var(--success);
+  font-size: 1.2rem;
+}
+
+.optimization-text {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* File Grouping */
+.file-group {
+  margin-top: 20px;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.file-group-header {
+  background: var(--bg-primary);
+  padding: 12px 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.file-group-header i {
+  color: var(--accent);
+}
+
+.file-group-content {
+  padding: 15px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Performance Metrics */
+.performance-metrics {
+  display: flex;
+  justify-content: space-around;
+  background: var(--bg-primary);
+  padding: 15px;
+  border-radius: var(--radius);
+  margin: 15px 0;
+  border: 1px solid var(--border);
+}
+
+.metric {
+  text-align: center;
+}
+
+.metric-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.metric-label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 768px) {
+  .header h1 {
+    font-size: 2rem;
+  }
+  
+  .upload-text {
+    font-size: 1.1rem;
+  }
+  
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .file-name {
+    max-width: 120px;
+  }
+  
+  .fab {
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    font-size: 1.2rem;
+  }
+  
+  .performance-metrics {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+</style>
+</head>
+
+<body>
+  <div class="background-shapes">
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
+  </div>
+
+  <div class="container">
+    <div class="header">
+      <button class="theme-toggle" id="themeToggle">
+        <i class="fas fa-moon"></i>
+      </button>
+      <h1><i class="fas fa-file-excel"></i> DataMerge Pro</h1>
+      <p>Effortlessly merge Excel & CSV files with smart header matching</p>
+    </div>
+
+    <div class="upload-section">
+      <div class="upload-area" id="uploadArea">
+        <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+        <div class="upload-text">Drop files here or click to browse</div>
+        <div class="upload-subtext">Supports .xlsx, .xls, and .csv formats</div>
+        <input type="file" id="fileInput" class="file-input" multiple accept=".xlsx,.xls,.csv" />
+      </div>
+      
+      <div class="optimization-info">
+        <i class="fas fa-rocket"></i>
+        <div class="optimization-text">
+          <strong>Turbocharged Processing:</strong> Optimized with Web Worker pool & efficient parsing for blazing speed.
+        </div>
+      </div>
+      
+      <div class="performance-metrics" id="performanceMetrics" style="display: none;">
+        <div class="metric">
+          <div class="metric-value" id="filesProcessed">0</div>
+          <div class="metric-label">Files Processed</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value" id="processingTime">0s</div>
+          <div class="metric-label">Processing Time</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value" id="rowsMerged">0</div>
+          <div class="metric-label">Rows Merged</div>
+        </div>
+      </div>
+      
+      <div id="fileGroups"></div>
+      <div class="uploaded-files" id="uploadedFiles"></div>
+    </div>
+
+    <div class="progress-container" id="progressContainer">
+      <div class="progress-bar" id="progressBar"></div>
+      <div class="progress-text" id="progressText">Processing files...</div>
+    </div>
+
+    <div class="action-buttons">
+      <button class="btn btn-primary" id="mergeBtn" disabled>
+        <i class="fas fa-layer-group"></i> Merge Files
+      </button>
+      <button class="btn btn-secondary" id="exportBtn" disabled>
+        <i class="fas fa-file-export"></i> Export
+      </button>
+      <button class="btn btn-secondary" id="clearBtn">
+        <i class="fas fa-trash-alt"></i> Clear
+      </button>
+    </div>
+
+    <div class="tabs-section" id="tabsSection">
+      <div class="tabs-header" id="tabsHeader"></div>
+      <div id="tabsContent"></div>
+    </div>
+  </div>
+
+  <button class="fab" id="helpBtn">
+    <i class="fas fa-question"></i>
+  </button>
+
+<script>
+// Web Worker for parallel processing
+const workerCode = `
+  self.importScripts(
+    'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js'
+  );
+
+  self.onmessage = function(e) {
+    const { taskId, file, mode } = e.data;
+    const reader = new FileReader();
+    
+    reader.onload = function(event) {
+      const content = event.target.result;
+      
+      // Helper to send results back to main thread
+      const sendResult = (result, error = null) => {
+        self.postMessage({ taskId, result, error });
+      };
+
+      try {
+        if (file.name.endsWith('.csv')) {
+          const config = {
+            header: true,
+            skipEmptyLines: true,
+            worker: false, // Ensure PapaParse runs in this worker, not spawning its own
+            complete: function(parsedResults) {
+              const result = {
+                data: parsedResults.data,
+                headers: parsedResults.meta.fields || []
+              };
+              sendResult(result);
+            },
+            error: function(err) {
+              sendResult(null, err.message);
+            }
+          };
+
+          if (mode === 'headers') {
+            config.preview = 1; // Only parse the first row for headers
+            config.complete = function(parsedResults) {
+              const result = {
+                headers: parsedResults.meta.fields || []
+              };
+              sendResult(result);
+            };
+          }
+          Papa.parse(content, config);
+        } else { // Excel file
+          const wb = XLSX.read(content, { type: 'binary' });
+          const sheet = wb.Sheets[wb.SheetNames[0]]; // Assuming first sheet
+          
+          let result = { headers: [], data: [] };
+
+          if (mode === 'headers') {
+            // Read only the header row (range: 0 specifies the first row)
+            const json = XLSX.utils.sheet_to_json(sheet, { header: 1, range: 0, raw: false });
+            if (json && json.length > 0) {
+              result.headers = json[0] || [];
+            }
+          } else { // mode === 'full'
+            const json = XLSX.utils.sheet_to_json(sheet, { raw: false }); // raw: false to keep formatted values
+            result.data = json;
+            if (json.length > 0) {
+              result.headers = Object.keys(json[0]);
+            }
+          }
+          sendResult(result);
+        }
+      } catch (e) {
+        sendResult(null, e.message);
+      }
+    };
+    
+    if (file.name.endsWith('.csv')) {
+      reader.readAsText(file);
+    } else {
+      reader.readAsBinaryString(file);
+    }
+  };
+`;
+
+// Create worker blob for performance
+const blob = new Blob([workerCode], { type: 'application/javascript' });
+const workerUrl = URL.createObjectURL(blob);
+
+// DOM Elements
+const uploadArea = document.getElementById('uploadArea');
+const fileInput = document.getElementById('fileInput');
+const uploadedFiles = document.getElementById('uploadedFiles');
+const fileGroups = document.getElementById('fileGroups');
+const mergeBtn = document.getElementById('mergeBtn');
+const exportBtn = document.getElementById('exportBtn');
+const clearBtn = document.getElementById('clearBtn');
+const tabsSection = document.getElementById('tabsSection');
+const tabsHeader = document.getElementById('tabsHeader');
+const tabsContent = document.getElementById('tabsContent');
+const themeToggle = document.getElementById('themeToggle');
+const helpBtn = document.getElementById('helpBtn');
+const progressContainer = document.getElementById('progressContainer');
+const progressBar = document.getElementById('progressBar');
+const progressText = document.getElementById('progressText');
+const performanceMetrics = document.getElementById('performanceMetrics');
+const filesProcessed = document.getElementById('filesProcessed');
+const processingTime = document.getElementById('processingTime');
+const rowsMerged = document.getElementById('rowsMerged');
+
+// State
+let files = []; // List of all uploaded files
+let fileGroupsData = {}; // Stores files grouped by their headers
+let mergedData = {}; // Stores merged data for each group
+let workerPool = []; // Array of { worker: Worker, busy: boolean, currentTaskId: number }
+let taskQueue = []; // Array of { id: number, file: File, mode: string, resolve: Function, reject: Function, assigned: boolean }
+let nextTaskId = 0; // Unique ID for each worker task
+let startTime = 0;
+let totalRows = 0;
+
+// Global state for progress tracking
+let totalFilesToProcess = 0;
+let filesCurrentlyProcessed = 0;
+let currentPhaseText = '';
+
+// --- Worker Pool Management ---
+const MAX_WORKERS = navigator.hardwareConcurrency || 4; // Use logical CPU cores
+
+function initWorkerPool() {
+  if (workerPool.length > 0) return; // Pool already initialized
+
+  for (let i = 0; i < MAX_WORKERS; i++) {
+    const worker = new Worker(workerUrl);
+    const poolEntry = { worker, busy: false, currentTaskId: null };
+    workerPool.push(poolEntry);
+
+    worker.onmessage = (e) => {
+      const { taskId, result, error } = e.data;
+      
+      // Find the task in the queue and resolve/reject its promise
+      const taskIndex = taskQueue.findIndex(t => t.id === taskId);
+      if (taskIndex !== -1) {
+        const task = taskQueue[taskIndex];
+        if (error) {
+          task.reject(new Error(error));
+        } else {
+          task.resolve(result);
+        }
+        taskQueue.splice(taskIndex, 1); // Remove completed task
+      }
+
+      poolEntry.busy = false;
+      poolEntry.currentTaskId = null;
+      assignNextTask(); // Try to assign the next pending task
+    };
+
+    worker.onerror = (error) => {
+      console.error('Worker error:', error);
+      // Find and reject the promise for the task that caused the error
+      if (poolEntry.currentTaskId !== null) {
+        const taskIndex = taskQueue.findIndex(t => t.id === poolEntry.currentTaskId);
+        if (taskIndex !== -1) {
+          const task = taskQueue[taskIndex];
+          task.reject(new Error('Worker processing failed.'));
+          taskQueue.splice(taskIndex, 1);
+        }
+      }
+      poolEntry.busy = false;
+      poolEntry.currentTaskId = null;
+      assignNextTask();
+    };
+  }
+}
+
+// Assigns a queued task to an available worker
+function assignNextTask() {
+  const availableWorker = workerPool.find(entry => !entry.busy);
+  const nextQueuedTask = taskQueue.find(task => !task.assigned); // Find the next unassigned task in the queue
+
+  if (availableWorker && nextQueuedTask) {
+    availableWorker.busy = true;
+    availableWorker.currentTaskId = nextQueuedTask.id;
+    nextQueuedTask.assigned = true; // Mark as assigned to prevent multiple assignments
+    availableWorker.worker.postMessage({
+      taskId: nextQueuedTask.id,
+      file: nextQueuedTask.file,
+      mode: nextQueuedTask.mode
+    });
+  }
+}
+
+// Submits a file processing task to the worker pool
+async function submitFileTask(file, mode) {
+  initWorkerPool(); // Ensure worker pool is initialized
+  const taskId = nextTaskId++; // Get unique task ID
+
+  return new Promise((resolve, reject) => {
+    taskQueue.push({ id: taskId, file, mode, resolve, reject, assigned: false });
+    assignNextTask(); // Attempt to assign the task immediately
+  });
+}
+
+// --- UI Functions ---
+
+// Theme toggle
+themeToggle.addEventListener('click', () => {
+  document.body.classList.toggle('dark-mode');
+  const icon = themeToggle.querySelector('i');
+  if (document.body.classList.contains('dark-mode')) {
+    icon.classList.remove('fa-moon');
+    icon.classList.add('fa-sun');
+  } else {
+    icon.classList.remove('fa-sun');
+    icon.classList.add('fa-moon');
+  }
+});
+
+// Help button
+helpBtn.addEventListener('click', () => {
+  alert('How to use DataMerge Pro:\n\n1. Upload Excel or CSV files by dragging them to the upload area or clicking to browse.\n2. Files are automatically grouped by matching headers (case-insensitive & order-insensitive).\n3. Click "Merge Files" to combine files within each group. This process is highly optimized with parallel processing.\n4. Edit data directly in the table if needed.\n5. Click "Export" to download the merged file as a single Excel workbook with separate sheets for each group.\n\nTip: The application leverages all available CPU cores for faster processing!');
+});
+
+// File upload handlers
+uploadArea.addEventListener('click', () => fileInput.click());
+
+uploadArea.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  uploadArea.classList.add('dragover');
+});
+
+uploadArea.addEventListener('dragleave', () => {
+  uploadArea.classList.remove('dragover');
+});
+
+uploadArea.addEventListener('drop', (e) => {
+  e.preventDefault();
+  uploadArea.classList.remove('dragover');
+  handleFiles(e.dataTransfer.files);
+});
+
+fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+// Handle file uploads - optimized for header detection
+async function handleFiles(fileList) {
+  const newFiles = Array.from(fileList).filter(file => file.name.match(/\.(xlsx|xls|csv)$/i));
+  
+  if (newFiles.length === 0) {
+    fileInput.value = ''; // Clear input even if no valid files
+    return;
+  }
+  
+  // Show and initialize progress
+  totalFilesToProcess = newFiles.length;
+  filesCurrentlyProcessed = 0;
+  currentPhaseText = 'Detecting headers...';
+  progressContainer.style.display = 'block';
+  updateProgress(0, currentPhaseText); // Initialize progress bar
+  
+  // Submit all files for header processing to the worker pool
+  const processPromises = newFiles.map(file => 
+    submitFileTask(file, 'headers').finally(() => updateGlobalProgress(1)) // Update progress on each file completion
+  );
+
+  const results = await Promise.allSettled(processPromises);
+  
+  // Process results to group files
+  for (let i = 0; i < newFiles.length; i++) {
+    const file = newFiles[i];
+    const result = results[i];
+
+    if (result.status === 'fulfilled' && result.value && result.value.headers) {
+      const headers = result.value.headers;
+      const headersKey = headers.sort().map(h => h.trim().toLowerCase()).join('|'); // Normalize headers for grouping
+      
+      if (!fileGroupsData[headersKey]) {
+        fileGroupsData[headersKey] = {
+          headers: headers,
+          files: []
+        };
+      }
+      fileGroupsData[headersKey].files.push(file);
+      files.push(file);
+    } else {
+      console.warn(`Could not process headers for file: ${file.name}. Error: ${result.reason || 'Unknown error'}`);
+      // Optionally show a user-friendly message for failed files
+    }
+  }
+  
+  // Hide progress and update UI
+  progressContainer.style.display = 'none';
+  fileInput.value = ''; // Clear file input after processing
+  updateFileGroupsUI();
+  updateButtons();
+}
+
+// Update file groups UI - optimized with single innerHTML update
+function updateFileGroupsUI() {
+  let groupHtml = '';
+  let uploadedFilesHtml = '';
+  
+  let groupIndex = 0;
+  for (const key in fileGroupsData) {
+    const group = fileGroupsData[key];
+    
+    if (group.files.length === 0) continue; // Skip empty groups
+    
+    groupHtml += `
+      <div class="file-group">
+        <div class="file-group-header">
+          <i class="fas fa-layer-group"></i>
+          <span>Group ${groupIndex + 1}: ${group.files.length} files (${group.headers.length} headers)</span>
+        </div>
+        <div class="file-group-content">
+    `;
+    
+    group.files.forEach(file => {
+      let iconClass = 'fa-file-excel';
+      if (file.name.endsWith('.csv')) {
+        iconClass = 'fa-file-csv';
+      }
+      
+      const fileItemHtml = `
+        <div class="file-item">
+          <div class="file-icon"><i class="fas ${iconClass}"></i></div>
+          <span class="file-name" title="${file.name}">${file.name}</span>
+          <button class="file-remove" data-filename="${file.name}"><i class="fas fa-times"></i></button>
+        </div>
+      `;
+      groupHtml += fileItemHtml;
+      uploadedFilesHtml += fileItemHtml; // Build this string for overall uploaded files list too
+    });
+    
+    groupHtml += `</div></div>`;
+    groupIndex++;
+  }
+  
+  fileGroups.innerHTML = groupHtml; // Update file groups once
+  uploadedFiles.innerHTML = uploadedFilesHtml; // Update general uploaded files list once
+  
+  // Add event listeners to remove buttons (after HTML is in DOM)
+  document.querySelectorAll('.file-remove').forEach(button => {
+    button.addEventListener('click', (e) => {
+      const fileName = e.currentTarget.getAttribute('data-filename');
+      removeFile(fileName);
+    });
+  });
+}
+
+// Remove file
+function removeFile(name) {
+  // Remove from master files array
+  files = files.filter(f => f.name !== name);
+  
+  // Remove from file groups
+  for (const key in fileGroupsData) {
+    fileGroupsData[key].files = fileGroupsData[key].files.filter(f => f.name !== name);
+    
+    // If a group becomes empty, remove it
+    if (fileGroupsData[key].files.length === 0) {
+      delete fileGroupsData[key];
+    }
+  }
+  
+  // Clear merged data and tabs if all files are removed
+  if (files.length === 0) {
+    mergedData = {};
+    tabsSection.style.display = 'none';
+    performanceMetrics.style.display = 'none';
+    exportBtn.disabled = true;
+  }
+  
+  // Update UI
+  updateFileGroupsUI();
+  updateButtons();
+}
+
+// Update buttons state
+function updateButtons() {
+  mergeBtn.disabled = files.length === 0;
+}
+
+// Update progress bar
+function updateProgress(percent, text) {
+  progressBar.style.width = `${percent}%`;
+  progressText.textContent = text;
+}
+
+// Update global progress (for allSettled promises)
+function updateGlobalProgress(increment = 0) {
+  filesCurrentlyProcessed += increment;
+  const progress = totalFilesToProcess > 0 ? Math.round((filesCurrentlyProcessed / totalFilesToProcess) * 100) : 0;
+  updateProgress(progress, currentPhaseText);
+}
+
+// Clear all files
+clearBtn.addEventListener('click', () => {
+  files = [];
+  fileGroupsData = {};
+  mergedData = {};
+  fileGroups.innerHTML = '';
+  uploadedFiles.innerHTML = '';
+  tabsSection.style.display = 'none';
+  performanceMetrics.style.display = 'none';
+  fileInput.value = '';
+  exportBtn.disabled = true;
+  updateButtons();
+  // Terminate workers if needed, or simply let the pool manage them.
+  // For a simple app, re-using them is fine.
+});
+
+// Merge files - optimized with worker pool
+mergeBtn.addEventListener('click', async () => {
+  mergedData = {};
+  totalRows = 0;
+  startTime = Date.now();
+  
+  // Show progress
+  totalFilesToProcess = files.length; // Total files across all groups
+  filesCurrentlyProcessed = 0;
+  currentPhaseText = 'Merging file data...';
+  progressContainer.style.display = 'block';
+  updateProgress(0, currentPhaseText);
+  
+  mergeBtn.disabled = true;
+  mergeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+  
+  // Collect all files to be processed for full data
+  const allFilesToProcess = [];
+  const fileToGroupKeyMap = new Map(); // Map file reference to its original group key
+  for (const key in fileGroupsData) {
+    fileGroupsData[key].files.forEach(file => {
+      allFilesToProcess.push(file);
+      fileToGroupKeyMap.set(file, key);
+    });
+  }
+
+  // Submit all files for full data processing to the worker pool
+  const processPromises = allFilesToProcess.map(file =>
+    submitFileTask(file, 'full').finally(() => updateGlobalProgress(1)) // Update progress on each file completion
+  );
+
+  const allResults = await Promise.allSettled(processPromises);
+  
+  // Consolidate merged data by groups
+  const tempGroupedData = {}; // Temporary structure to build mergedData
+  for (let i = 0; i < allFilesToProcess.length; i++) {
+    const file = allFilesToProcess[i];
+    const result = allResults[i];
+    const groupKey = fileToGroupKeyMap.get(file);
+
+    if (groupKey && result.status === 'fulfilled' && result.value && result.value.data) {
+      if (!tempGroupedData[groupKey]) {
+        tempGroupedData[groupKey] = {
+          headers: fileGroupsData[groupKey].headers, // Use the detected headers for the group
+          rows: []
+        };
+      }
+      tempGroupedData[groupKey].rows.push(...result.value.data);
+      totalRows += result.value.data.length;
+    } else {
+      console.warn(`Failed to merge data from file: ${file.name}. Reason: ${result.reason || 'Unknown error'}`);
+    }
+  }
+
+  mergedData = tempGroupedData; // Assign to global mergedData
+
+  // Hide progress and update UI
+  progressContainer.style.display = 'none';
+  mergeBtn.disabled = false;
+  mergeBtn.innerHTML = '<i class="fas fa-layer-group"></i> Merge Files';
+  
+  // Update performance metrics
+  const endTime = Date.now();
+  const timeElapsed = ((endTime - startTime) / 1000).toFixed(2);
+  
+  filesProcessed.textContent = files.length;
+  processingTime.textContent = `${timeElapsed}s`;
+  rowsMerged.textContent = totalRows.toLocaleString();
+  performanceMetrics.style.display = 'flex';
+  
+  displayTabs();
+  exportBtn.disabled = Object.keys(mergedData).length > 0;
+});
+
+// Display tabs
+function displayTabs() {
+  tabsHeader.innerHTML = '';
+  tabsContent.innerHTML = '';
+  let index = 0;
+  for (const key in mergedData) {
+    const data = mergedData[key];
+    const tabId = `tab-${index}`;
+    const btn = document.createElement('button');
+    btn.className = `tab-button ${index === 0 ? 'active' : ''}`;
+    btn.innerHTML = `<i class="fas fa-table"></i> Group ${index + 1} (${data.rows.length} rows)`;
+    btn.onclick = e => switchTab(tabId, e);
+    tabsHeader.appendChild(btn);
+
+    const pane = document.createElement('div');
+    pane.id = tabId;
+    pane.className = `tab-content ${index === 0 ? 'active' : ''}`;
+    pane.innerHTML = createTable(data.headers, data.rows, index);
+    tabsContent.appendChild(pane);
+    index++;
+  }
+  tabsSection.style.display = 'block';
+}
+
+// Switch tab
+function switchTab(tabId, e) {
+  document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  e.target.classList.add('active');
+  document.getElementById(tabId).classList.add('active');
+}
+
+// Create table - uses string concatenation for initial render performance
+function createTable(headers, rows, tabIndex) {
+  if (rows.length === 0) {
+    return `<div class="empty-state">
+              <i class="fas fa-box-open empty-state-icon"></i>
+              <p>No data to display in this group.</p>
+            </div>`;
+  }
+
+  let html = `<div class="table-container"><table><thead><tr><th>#</th>`;
+  headers.forEach(h => (html += `<th>${h}</th>`));
+  html += `</tr></thead><tbody>`;
+  rows.forEach((r, i) => {
+    html += `<tr><td class="row-number">${i + 1}</td>`;
+    headers.forEach(h => {
+      // Ensure data is string for contenteditable, handle null/undefined
+      const cellContent = r[h] !== undefined && r[h] !== null ? String(r[h]) : '';
+      html += `<td><div class="editable" contenteditable="true" data-tab="${tabIndex}" data-row="${i}" data-col="${h}">${cellContent}</div></td>`;
+    });
+    html += `</tr>`;
+  });
+  html += `</tbody></table></div>`;
+  return html;
+}
+
+// Handle editable cell changes
+document.addEventListener('input', e => {
+  if (e.target.classList.contains('editable')) {
+    const t = +e.target.dataset.tab; // Convert to number
+    const r = +e.target.dataset.row;
+    const c = e.target.dataset.col;
+    
+    const groupKeys = Object.keys(mergedData);
+    if (t < groupKeys.length) { // Ensure tab index is valid
+      const key = groupKeys[t];
+      if (mergedData[key] && mergedData[key].rows && r < mergedData[key].rows.length) { // Ensure row index is valid
+        mergedData[key].rows[r][c] = e.target.textContent;
+      }
+    }
+  }
+});
+
+// Export merged data
+exportBtn.addEventListener('click', () => {
+  const wb = XLSX.utils.book_new();
+  let i = 1;
+  for (const key in mergedData) {
+    if (mergedData[key].rows.length > 0) {
+      const ws = XLSX.utils.json_to_sheet(mergedData[key].rows);
+      XLSX.utils.book_append_sheet(wb, ws, `Group ${i}`);
+    } else {
+      // Create an empty sheet or a sheet with just headers if no rows
+      const ws = XLSX.utils.aoa_to_sheet([mergedData[key].headers]);
+      XLSX.utils.book_append_sheet(wb, ws, `Group ${i} (Empty)`);
+    }
+    i++;
+  }
+  XLSX.writeFile(wb, `merged_data_${Date.now()}.xlsx`);
+});
+</script>
+</body>
+</html>
